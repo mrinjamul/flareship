@@ -1,0 +1,13 @@
+{
+  "restricted_subdomain": [
+    "ww([0-9]+)",
+    "api",
+    "admin",
+    "assets",
+    "cdn",
+    "dev",
+    "git",
+    "static",
+    "x"
+  ]
+}

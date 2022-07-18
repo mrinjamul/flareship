@@ -1,0 +1,16 @@
+[
+  {
+    "description": "The root domain for mrinjamul.in website",
+    "repo": "https://github.com/mrinjamul/mrinjamul",
+    "owner": {
+      "username": "mrinjamul",
+      "email": "your-email-address"
+    },
+    "record": {
+      "type": "A",
+      "name": "@",
+      "content": "your-ip-address",
+      "proxied": true
+    }
+  }
+]

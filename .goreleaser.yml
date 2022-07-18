@@ -1,0 +1,85 @@
+# GoReleaser config
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    # Default is `.`.
+    main: ./cmd
+    # Default is the name of the project directory.
+    binary: flareship
+    ldflags: -X main.Version={{ .Tag }} -X main.GitCommit={{ .FullCommit }} -s -w
+    goos:
+      - linux
+      - windows
+      - darwin
+      - freebsd
+      - openbsd
+      - netbsd
+    goarch:
+      - amd64
+      - arm64
+      - "386"
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarm: "7"
+
+nfpms:
+  - vendor: mrinjamul
+    homepage: https://github.com/mrinjamul/flareship
+    maintainer: "Injamul M <mrinjamul@gmail.com>"
+    description: "A CLI to sync domains from local to Cloudflare."
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+
+brews:
+  - tap:
+      owner: mrinjamul
+      name: homebrew-main
+      branch: main
+    homepage: https://mrinjamul.github.io/flareship
+    description: "A CLI to sync domains from local to Cloudflare."
+    license: "MIT License"
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    folder: Formula
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-dev"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+  groups:
+    - title: "New Features"
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: "Bug fixes"
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 10
+    - title: Others
+      order: 999
+# dockers:
+#   - image_templates:
+#     - "username/image:{{ .Tag }}"
+
+release:
+  footer: |
+    * * *
+    Thoughts? Questions? We love hearing from you. Feel free to reach out on [Mail](mailto:mrinjamul@pm.me).
