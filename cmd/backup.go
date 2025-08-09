@@ -11,9 +11,9 @@ import (
 )
 
 // versionCmd represents the version command
-var exportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "export DNS records to file.",
+var backupCmd = &cobra.Command{
+	Use:   "backup",
+	Short: "backup DNS records to file.",
 	Run: func(cmd *cobra.Command, args []string) {
 		var records []models.Records
 		var cfrecords []models.Record
@@ -21,31 +21,31 @@ var exportCmd = &cobra.Command{
 		if flagDomain != "" {
 			Domain = flagDomain
 		}
-		fmt.Println("INFO - export started...")
+		fmt.Println("INFO - backup started...")
 		cfrecords = GetRecords(EnabledRecordType)
 		for _, record := range cfrecords {
 			var r models.Records
 			r.Record = record
 			records = append(records, r)
 		}
-		fmt.Println("INFO - exporting to file...")
-		err := ExportRecords(records)
+		fmt.Println("INFO - backuping to file...")
+		err := backupRecords(records)
 		if err != nil {
 			fmt.Println(err)
-			fmt.Println("ERROR - cannot able to export records")
+			fmt.Println("ERROR - cannot able to backup records")
 			fmt.Printf("FAIL\t%v\n", err)
 			os.Exit(1)
 		}
-		fmt.Println("INFO - export completed...")
+		fmt.Println("INFO - backup completed...")
 	},
 }
 
 func init() {
-	exportCmd.Flags().StringVarP(&flagRecords, "file", "f", "", "specify the export file")
-	exportCmd.Flags().StringVar(&flagDomain, "domain", "", "specify the domain name")
+	backupCmd.Flags().StringVarP(&flagRecords, "file", "f", "", "specify the backup file")
+	backupCmd.Flags().StringVar(&flagDomain, "domain", "", "specify the domain name")
 }
 
-func ExportRecords(records []models.Records) error {
+func backupRecords(records []models.Records) error {
 	var configFile string
 	if flagRecords != "" {
 		configFile = flagRecords

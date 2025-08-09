@@ -35,7 +35,7 @@ func main() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(fmtCmd)
 	rootCmd.AddCommand(syncCmd)
-	rootCmd.AddCommand(exportCmd)
+	rootCmd.AddCommand(backupCmd)
 	rootCmd.AddCommand(listCmd)
 	// add flags
 	// rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "", "config file")
