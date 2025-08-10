@@ -81,10 +81,9 @@ func LoadConfig(path string) (*schema.AppConfig, error) {
 
 	homeDir := utils.HomeDir()
 	configPath := filepath.Join(homeDir, ".config", "flareship.json")
-	_, err := os.Stat(path)
-	if err == nil {
-		// fmt.Println("Using default config: " + configPath)
-		path = configPath
+
+	if info, err := os.Stat(configPath); err == nil && !info.IsDir() {
+		path = configPath // File exists and is not a directory
 	}
 
 	bytes, err := os.ReadFile(path)

@@ -28,6 +28,12 @@ var listCmd = &cobra.Command{
 
 		for _, domain := range AppConfig.Domains {
 
+			if flagDomain != "" {
+				if flagDomain != domain.Name {
+					continue
+				}
+			}
+
 			recordFile := domain.RecordFile
 			Domain := domain.Name
 			if len(EnabledRecordType) == 0 {
@@ -64,4 +70,5 @@ var listCmd = &cobra.Command{
 func init() {
 	listCmd.Flags().StringVarP(&flagTypes, "type", "t", "", "specify the types of records")
 	listCmd.Flags().BoolVarP(&flagLocal, "local", "l", false, "specify the target to list e.g. local")
+	listCmd.Flags().StringVar(&flagDomain, "domain", "", "specify the domain name")
 }
