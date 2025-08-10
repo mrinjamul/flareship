@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/mrinjamul/flareship/internal/cloudflare"
+	"github.com/mrinjamul/flareship/internal/log"
 	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
@@ -49,7 +49,7 @@ var backupCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Println("INFO - backup started...")
+			log.Info("Backup started...")
 			cfrecords = cloudflare.ReadAllRecords(domain.ZoneID, domain.CFToken, EnabledRecordType)
 			for _, record := range cfrecords {
 				var r schema.Records
@@ -58,16 +58,13 @@ var backupCmd = &cobra.Command{
 				r.Record = record
 				records = append(records, r)
 			}
-			fmt.Println("INFO - backuping to file...")
+			log.Info("Backing up to file...")
 			err := backupRecords(records, domain.Name)
 			if err != nil {
-				fmt.Println(err)
-				fmt.Println("ERROR - cannot able to backup records")
-				fmt.Printf("FAIL\t%v\n", err)
-				os.Exit(1)
+				log.Error("Failed to backup records: %v", err)
 			}
 		}
-		fmt.Println("INFO - backup completed...")
+		log.Info("Backup completed.")
 	},
 }
 
@@ -82,7 +79,7 @@ func backupRecords(records []schema.Records, domainName string) error {
 	date := utils.NewDate()
 	num := utils.RandomNumber()
 	configFile = "dns_records_" + domainName + "_" + date + "_" + num + ".json"
-	fmt.Println(configFile)
+	log.Info(configFile)
 	data, err := json.Marshal(records)
 	if err != nil {
 		return err

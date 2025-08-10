@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/mrinjamul/flareship/internal/cloudflare"
-	"github.com/mrinjamul/flareship/internal/log" // Import the new log package
+	"github.com/mrinjamul/flareship/internal/log"
 	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/spf13/cobra"
 )

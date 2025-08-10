@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mrinjamul/flareship/internal/log"
 	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
@@ -29,14 +30,14 @@ var fmtCmd = &cobra.Command{
 			recordsFile := domain.RecordFile
 			restrictedFile := domain.RestrictedFile
 
-			fmt.Println("checking for " + domain.Name)
+			log.Info("Checking records for %s...", domain.Name)
 
 			if recordsFile == "" {
-				fmt.Println("records file does not exists!")
+				log.Info("Records file does not exist!")
 				continue
 			}
 			if restrictedFile == "" {
-				fmt.Println("restricted file does not exists!")
+				log.Info("Restricted file does not exist!")
 				continue
 			}
 
@@ -47,29 +48,26 @@ var fmtCmd = &cobra.Command{
 				var records []schema.Records
 				records, err := utils.GetRecords(recordsFile)
 				if err != nil {
-					fmt.Println(err)
-					fmt.Println("ERROR - cannot able to parse records")
-					fmt.Printf("FAIL\t%v\n", err)
-					os.Exit(1)
+					log.Error("Failed to parse records: %v", err)
 				}
 				for id, record := range records {
-					fmt.Printf("INFO - id: %d\n", id+1)
-					fmt.Printf("INFO - %s: %s %s\n", record.Record.Type, record.Record.Name, record.Record.Content)
+					log.Info("ID: %d", id+1)
+					log.Info("%s: %s %s", record.Record.Type, record.Record.Name, record.Record.Content)
 					if !record.Record.Proxied && (record.Record.Type == "A" || record.Record.Type == "AAAA" || record.Record.Type == "CNAME") {
 						warn = true
-						fmt.Println("WARN - Proxied is false")
-						fmt.Println("WARN - Please check the record")
+						log.Info("WARN - Proxied is false")
+						log.Info("WARN - Please check the record")
 					}
 					if record.Record.Type == "" {
-						fmt.Println("FAIL\trecord type cannot be empty")
+						log.Error("Record type cannot be empty")
 						os.Exit(1)
 					}
 					if record.Record.Name == "" {
-						fmt.Println("FAIL\trecord name cannot be empty")
+						log.Error("Record name cannot be empty")
 						os.Exit(1)
 					}
 					if record.Record.Content == "" {
-						fmt.Println("FAIL\trecord content cannot be empty")
+						log.Error("Record content cannot be empty")
 						os.Exit(1)
 					}
 				}
@@ -78,48 +76,41 @@ var fmtCmd = &cobra.Command{
 				var enabledRecordType []string = []string{"A", "AAAA", "CNAME", "TXT", "MX", "SRV"}
 				localRecords, err := utils.GetDNSRecords(recordsFile, enabledRecordType)
 				if err != nil {
-					fmt.Println(err)
-					fmt.Println("ERROR - cannot able to parse dns records")
-					fmt.Printf("FAIL\t%v\n", err)
-					os.Exit(1)
+					log.Error("Failed to parse DNS records: %v", err)
 				}
 				_, restrictedRecords := utils.RemoveRestrictedSubdomains(restrictedFile, localRecords)
 				if len(restrictedRecords) > 0 {
 					hasError = true
-					fmt.Println("ERROR - Restricted subdomains found")
-					fmt.Println("ERROR - Please check the record")
+					log.Info("Restricted subdomains found")
+					log.Info("Please check the record")
 					errorsList = append(errorsList, "Restricted subdomains found")
 					fmt.Println()
 					// print restricted records
 					for _, record := range restrictedRecords {
-						fmt.Printf("ERROR - %s: %s %s\n", record.Type, record.Name, record.Content)
+						log.Info("%s: %s %s", record.Type, record.Name, record.Content)
 					}
 				}
 
 				if hasError {
 					for _, error := range errorsList {
-						fmt.Printf("FAIL\t%s\n", error)
+						log.Info("%s", error)
 					}
-					fmt.Println("TEST\t failed")
-					fmt.Println("run `flareship fmt` to fix the errors")
-					os.Exit(1)
+					log.Info("Run `flareship fmt` to fix the errors")
+					log.Error("Test failed")
 				}
 
-				fmt.Println()
-				fmt.Printf("INFO - %d record(s) found and are valid\n", len(records))
+				log.Info("%d record(s) found and are valid", len(records))
 				if warn {
-					fmt.Println("WARN - There is some records with warning")
-					fmt.Println("WARN - Please check the records")
+					log.Info("WARN - Some records have warnings")
+					log.Info("WARN - Please check the records")
 				}
-				fmt.Println("PASS\tok")
+				log.Info("PASS - All checks passed.")
 				continue
 			}
 
 			records, err := utils.GetRecords(recordsFile)
 			if err != nil {
-				fmt.Println(err)
-				fmt.Println("ERROR - fail to parse local DNS records")
-				os.Exit(1)
+				log.Error("Failed to parse local DNS records: %v", err)
 			}
 			restrictedList := utils.ReadRestrictedRecords(restrictedFile)
 			var removeList []int
@@ -131,14 +122,14 @@ var fmtCmd = &cobra.Command{
 				records[i].Record.Proxiable = true
 				// Set Proxied to true if the record type is A, AAAA or CNAME
 				if (records[i].Record.Type == "A" || records[i].Record.Type == "AAAA" || records[i].Record.Type == "CNAME") && !records[i].Record.Proxied {
-					fmt.Println("INFO - Setting Proxied to true")
+					log.Info("Setting Proxied to true for %s", records[i].Record.Name)
 					records[i].Record.Proxied = true
 					count++
 					flag = true
 				}
 				// Set TTL to 1 if the record type is A, AAAA or CNAME
 				if (records[i].Record.Type == "A" || records[i].Record.Type == "AAAA" || records[i].Record.Type == "CNAME") && records[i].Record.TTL == 0 {
-					fmt.Println("INFO - Setting TTL to auto")
+					log.Info("Setting TTL to auto for %s", records[i].Record.Name)
 					records[i].Record.TTL = 1
 					if !flag {
 						count++
@@ -164,21 +155,17 @@ var fmtCmd = &cobra.Command{
 			// write the records to the file
 			data, err := json.MarshalIndent(records, "", "\t")
 			if err != nil {
-				fmt.Println(err)
-				fmt.Println("ERROR - fail to convert records")
-				os.Exit(1)
+				log.Error("Failed to convert records to JSON: %v", err)
 			}
 			err = os.WriteFile(recordsFile, data, 0644)
 			if err != nil {
-				fmt.Println(err)
-				fmt.Println("ERROR - fail to write records")
-				os.Exit(1)
+				log.Error("Failed to write records to file: %v", err)
 			}
 			if removed {
-				fmt.Printf("INFO - %d record(s) removed\n", len(removeList))
+				log.Info("%d record(s) removed", len(removeList))
 			}
-			fmt.Printf("INFO - %d record(s) formatted\n", count)
-			fmt.Println("INFO - fomatting record complete!")
+			log.Info("%d record(s) formatted", count)
+			log.Info("Formatting record complete!")
 		}
 	},
 }

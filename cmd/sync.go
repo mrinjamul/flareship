@@ -170,7 +170,7 @@ var syncCmd = &cobra.Command{
 				log.Info("found none") // Replaced fmt.Println
 			}
 			log.Info("STATUS - %d record(s) created, %d record(s) updated, %d record(s) deleted", len(createdRecords), len(updatedRecords), len(deletedRecords)) // Replaced fmt.Printf
-			log.Info("") // Replaced fmt.Println
+			
 			log.Info("sync completed for %s 🎉", domainName) // Replaced fmt.Printf
 		}
 

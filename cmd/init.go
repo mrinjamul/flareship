@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mrinjamul/flareship/internal/config"
+	"github.com/mrinjamul/flareship/internal/log"
 	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ var initCmd = &cobra.Command{
 
 		// Skip if config already exists
 		if _, err := os.Stat(config.DefaultConfigFile); err == nil {
-			fmt.Printf("Configuration file '%s' already exists. Skipping initialization.\n", config.DefaultConfigFile)
+			log.Info("Configuration file '%s' already exists. Skipping initialization.", config.DefaultConfigFile)
 			return
 		}
 
@@ -89,9 +90,9 @@ var initCmd = &cobra.Command{
 }`
 				err := os.WriteFile(restrictedFileName, []byte(defaultRestricted), 0644)
 				if err != nil {
-					fmt.Printf("Failed to create restricted file %s: %v\n", restrictedFileName, err)
+					log.Error("Failed to create restricted file %s: %v", restrictedFileName, err)
 				} else {
-					fmt.Printf("Created restricted file %s with default content.\n", restrictedFileName)
+					log.Info("Created restricted file %s with default content.", restrictedFileName)
 				}
 			}
 
@@ -116,9 +117,9 @@ var initCmd = &cobra.Command{
 
 				err := os.WriteFile(domain.RecordFile, []byte(defaultContent), 0644)
 				if err != nil {
-					fmt.Printf("Failed to create record file %s: %v\n", domain.RecordFile, err)
+					log.Error("Failed to create record file %s: %v", domain.RecordFile, err)
 				} else {
-					fmt.Printf("Created record file %s with default content.\n", domain.RecordFile)
+					log.Info("Created record file %s with default content.", domain.RecordFile)
 				}
 			}
 
@@ -134,12 +135,12 @@ var initCmd = &cobra.Command{
 
 		err := config.InitConfig(&cfg)
 		if err != nil {
-			fmt.Printf("Failed to initialize config: %v\n", err)
+			log.Error("Failed to initialize config: %v", err)
 			os.Exit(1)
 		} else {
-			fmt.Println("Config initialized successfully.")
-			fmt.Println("For setting this global config, move this config to ")
-			fmt.Println(" $HOME/.config/flareship.config")
+			log.Info("Config initialized successfully.")
+			log.Info("For setting this global config, move this config to:")
+			log.Info("  $HOME/.config/flareship.config")
 		}
 	},
 }
