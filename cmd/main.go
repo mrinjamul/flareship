@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mrinjamul/flareship/internal/config"
+	"github.com/mrinjamul/flareship/internal/log" // Import the new log package
 	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
 )
 
 var (
-	flagConfig string = ""
-	AppConfig  *schema.AppConfig
+	flagConfig  string = ""
+	flagVerbose bool   // New global verbose flag
+	AppConfig   *schema.AppConfig
 )
 
 func init() {
@@ -39,7 +40,11 @@ func main() {
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(backupCmd)
 	// add flags
+	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "enable verbose output") // Add verbose flag
 	rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "", "specify config file location")
+
+	// Initialize logger verbosity
+	log.SetVerbose(flagVerbose)
 
 	// PreRun
 	_, present := os.LookupEnv("FLARESHIP_CONFIG")
@@ -51,14 +56,13 @@ func main() {
 	AppConfig, err = config.LoadConfig(flagConfig)
 
 	if err != nil {
-		log.Fatalf("Failed to load config from %s: %v\n", flagConfig, err)
+		log.Error("Failed to load config from %s: %v", flagConfig, err) // Use log.Error
 	}
 
 	// fmt.Println(AppConfig)
 
 	err = rootCmd.Execute()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Error("%v", err) // Use log.Error
 	}
 }

@@ -2,10 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 
 	"github.com/mrinjamul/flareship/internal/cloudflare"
+	"github.com/mrinjamul/flareship/internal/log" // Import the new log package
 	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
@@ -27,8 +26,8 @@ var syncCmd = &cobra.Command{
 	Short: "sync with remote DNS.",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Println("flareship CLI is running 🌟")
-		fmt.Println("sync started...")
+		log.Info("flareship CLI is running 🌟")
+		log.Info("sync started...")
 
 		for _, domain := range AppConfig.Domains {
 			if flagDomain != "" {
@@ -50,19 +49,17 @@ var syncCmd = &cobra.Command{
 				EnabledRecordType = domain.RecordTypes
 			}
 
-			fmt.Printf("sync for %s ...\n", domainName)
+			log.Info("sync for %s ...", domainName)
 
 			// gather from remote
-			fmt.Println("INFO - gathering DNS Records from cloudflare api...")
+			log.Info("gathering DNS Records from cloudflare api...")
 			registeredRecords := cloudflare.ReadAllRecords(zoneID, token, EnabledRecordType)
-			fmt.Printf("INFO - got %d registered DNS Records on cf \n", len(registeredRecords))
+			log.Info("got %d registered DNS Records on cf", len(registeredRecords))
 			// gather from local
-			fmt.Println("INFO - gathering DNS Records from repository...")
+			log.Info("gathering DNS Records from repository...")
 			localRecords, err := utils.GetDNSRecords(recordsFile, EnabledRecordType)
 			if err != nil {
-				fmt.Println(err)
-				fmt.Println("ERROR - fail to parse local DNS records")
-				os.Exit(1)
+				log.Error("fail to parse local DNS records: %v", err)
 			}
 			for id := range localRecords {
 				localRecords[id].TTL = 1
@@ -72,18 +69,18 @@ var syncCmd = &cobra.Command{
 					localRecords[id].Name = localRecords[id].Name + "." + domainName
 				}
 			}
-			fmt.Printf("INFO - got %d local CNAME Records in repo \n", len(localRecords))
+			log.Info("got %d local CNAME Records in repo", len(localRecords))
 
 			// remove restricted subdomains
-			fmt.Println("INFO - removing restricted subdomains...")
+			log.Info("removing restricted subdomains...")
 			localRecords, removedRecords := utils.RemoveRestrictedSubdomains(restrictedFile, localRecords)
-			fmt.Printf("INFO - got %d local CNAME Records after removing restricted subdomains \n", len(localRecords))
-			fmt.Printf("INFO - removed %d restricted subdomains \n", len(removedRecords))
+			log.Info("got %d local CNAME Records after removing restricted subdomains", len(localRecords))
+			log.Info("removed %d restricted subdomains", len(removedRecords))
 
 			var createdRecords []schema.Record
 			var updatedRecords []schema.Record
 
-			fmt.Println("INFO - inspecting DNS records ..")
+			log.Info("inspecting DNS records ..")
 
 			for _, record := range localRecords {
 				r := utils.FindRecordByName(registeredRecords, record.Name)
@@ -96,45 +93,41 @@ var syncCmd = &cobra.Command{
 					createdRecords = append(createdRecords, record)
 				}
 			}
-			fmt.Printf("INFO - found %d DNS Records to create \n", len(createdRecords))
-			fmt.Printf("INFO - found %d DNS Records to update \n", len(updatedRecords))
+			log.Info("found %d DNS Records to create", len(createdRecords))
+			log.Info("found %d DNS Records to update", len(updatedRecords))
 
 			// Create records from the list
 			if len(createdRecords) > 0 {
-				fmt.Println(" INFO - Creating DNS Record(s):")
+				log.Info("Creating DNS Record(s):")
 				for _, r := range createdRecords {
 					postBody, err := json.Marshal(r)
 					if err != nil {
-						fmt.Println(err)
-						fmt.Println("ERROR - fail to marshal record while creating")
-						os.Exit(1)
+						log.Error("fail to marshal record while creating: %v", err)
 					}
 					if !flagDryRun {
 						newRecords := cloudflare.CreateRecord(zoneID, token, postBody)
 						r = newRecords
 					}
-					fmt.Printf("%s %s: %s %s\n", r.ID, r.Type, r.Name, r.Content)
+					log.Info("%s %s: %s %s", r.ID, r.Type, r.Name, r.Content) // Replaced fmt.Printf
 				}
 			}
 			// Update records from the list
 			if len(updatedRecords) > 0 {
-				fmt.Println("INFO - Updating DNS Record(s):")
+				log.Info("Updating DNS Record(s):") // Replaced fmt.Println
 				for _, r := range updatedRecords {
-					fmt.Println(r)
+					log.Debug("Updating record: %+v", r) // Replaced fmt.Println(r)
 					postBody, err := json.Marshal(r)
 					if err != nil {
-						fmt.Println(err)
-						fmt.Println("ERROR - fail to marshal record while updating")
-						os.Exit(1)
+						log.Error("fail to marshal record while updating: %v", err) // Replaced fmt.Println(err) and os.Exit(1)
 					}
 					if !flagDryRun {
 						r = cloudflare.UpdateRecord(zoneID, token, r.ID, postBody)
 					}
-					fmt.Printf("%s %s: %s %s\n", r.ID, r.Type, r.Name, r.Content)
+					log.Info("%s %s: %s %s", r.ID, r.Type, r.Name, r.Content) // Replaced fmt.Printf
 				}
 			}
 			// check for unused records
-			fmt.Println("INFO - checking for deleted DNS records...")
+			log.Info("checking for deleted DNS records...") // Replaced fmt.Println
 			var deletedRecords []schema.Record
 			// check record which is not in the registeredRecords
 			for _, r := range registeredRecords {
@@ -142,26 +135,26 @@ var syncCmd = &cobra.Command{
 					deletedRecords = append(deletedRecords, r)
 				}
 			}
-			fmt.Printf("INFO - found %d DNS Records to be delete \n", len(deletedRecords))
+			log.Info("found %d DNS Records to be delete", len(deletedRecords)) // Replaced fmt.Printf
 			// Delete unsed records
 			if len(deletedRecords) != 0 {
-				fmt.Println("Deleting DNS Record:")
+				log.Info("Deleting DNS Record:") // Replaced fmt.Println
 				for _, r := range deletedRecords {
 					var result schema.DelResponse
 					if !flagDryRun {
 						result = cloudflare.DeleteRecord(zoneID, token, r.ID)
 						if result.Result.ID == "" {
-							fmt.Println("ERROR - failed to delete " + r.Type + ":" + r.Name)
+							log.Error("failed to delete %s:%s", r.Type, r.Name) // Replaced fmt.Println and os.Exit(1)
 						}
 					}
-					fmt.Printf("%s: %s %s\n", result.Result.ID, r.Name, r.Content)
+					log.Info("%s: %s %s", result.Result.ID, r.Name, r.Content) // Replaced fmt.Printf
 				}
 			} else {
-				fmt.Println("INFO - found none")
+				log.Info("found none") // Replaced fmt.Println
 			}
-			fmt.Printf("STATUS - %d record(s) created, %d record(s) updated, %d record(s) deleted\n", len(createdRecords), len(updatedRecords), len(deletedRecords))
-			fmt.Println("")
-			fmt.Printf("sync completed for %s 🎉\n", domainName)
+			log.Info("STATUS - %d record(s) created, %d record(s) updated, %d record(s) deleted", len(createdRecords), len(updatedRecords), len(deletedRecords)) // Replaced fmt.Printf
+			log.Info("") // Replaced fmt.Println
+			log.Info("sync completed for %s 🎉", domainName) // Replaced fmt.Printf
 		}
 
 	},
