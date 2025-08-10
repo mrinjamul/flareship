@@ -22,3 +22,7 @@ flareship
 # secrets
 .env
 dns_records_*
+flareship.json
+*.json
+# Added by goreleaser init:
+dist/

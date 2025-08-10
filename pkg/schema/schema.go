@@ -1,4 +1,6 @@
-package models
+package schema
+
+import "fmt"
 
 // Record is the struct for the record
 type Record struct {
@@ -91,12 +93,33 @@ type DelResponse struct {
 	Errors []Errors  `json:"errors"`
 }
 
-// Config is the struct for the config file
-type Config struct {
+// DomainConfig represents config for a single domain
+type DomainConfig struct {
 	CFToken        string   `json:"cf_token"`
 	ZoneID         string   `json:"zone_id"`
-	DomainName     string   `json:"domain_name"`
+	Name           string   `json:"name"`
 	RecordFile     string   `json:"record_file"`
-	RestrictedFile string   `json:"restricted_file"`
-	RecordType     []string `json:"record_type"`
+	RestrictedFile string   `json:"restricted_file,omitempty"`
+	RecordTypes    []string `json:"record_type,omitempty"`
+}
+
+// AppConfig represents the full configuration (supports multi-domain in future)
+type AppConfig struct {
+	Domains []DomainConfig `json:"domains"`
+}
+
+// validate ensures all required fields are present
+func (c *AppConfig) Validate() error {
+	for i, domain := range c.Domains {
+		if domain.Name == "" {
+			return fmt.Errorf("domain[%d] is missing 'name'", i)
+		}
+		if domain.RecordFile == "" {
+			return fmt.Errorf("domain[%d] is missing 'record_file'", i)
+		}
+		if len(domain.RecordTypes) == 0 {
+			return fmt.Errorf("domain[%d] must have at least one 'record_type'", i)
+		}
+	}
+	return nil
 }

@@ -1,0 +1,75 @@
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    # Default is `.`.
+    main: ./cmd
+    # Default is the name of the project directory.
+    binary: flareship
+    ldflags: -X main.Version={{ .Tag }} -X main.GitCommit={{ .FullCommit }} -s -w
+    goos:
+      - linux
+      - windows
+      - darwin
+      - freebsd
+      - openbsd
+      - netbsd
+    goarch:
+      - amd64
+      - arm64
+      - "386"
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarm: "7"
+
+archives:
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+  groups:
+    - title: "✨ Features"
+      regexp: "^feat:"
+      order: 0
+    - title: "🐛 Fixes"
+      regexp: "^fix:"
+      order: 10
+    - title: "🛠 Maintenance"
+      regexp: "^chore:"
+      order: 20
+    - title: Others
+      order: 999
+
+release:
+  footer: >-
+
+    ---
+    Thoughts? Questions? We love hearing from you. Feel free to reach out on [Mail](mailto:mrinjamul@pm.me).

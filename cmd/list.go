@@ -5,7 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mrinjamul/flareship/utils"
+	"github.com/mrinjamul/flareship/internal/cloudflare"
+	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -25,36 +26,38 @@ var listCmd = &cobra.Command{
 			types = strings.Split(flagTypes, ",")
 		}
 
-		// list records from local json file
-		if flagLocal {
-			if flagRecords == "" {
-				flagRecords = "records.json"
+		for _, domain := range AppConfig.Domains {
+
+			recordFile := domain.RecordFile
+			Domain := domain.Name
+			if len(EnabledRecordType) == 0 {
+				EnabledRecordType = domain.RecordTypes
 			}
-			fmt.Println("INFO - gathering DNS Records from local ...")
-			localRecords, err := utils.GetDNSRecords(flagRecords, EnabledRecordType)
-			if err != nil {
-				fmt.Println(err)
-				fmt.Println("ERROR - fail to parse local DNS records")
-				os.Exit(1)
+			// list records from local json file
+			if flagLocal {
+				fmt.Println("INFO - gathering DNS Records from local ...")
+				localRecords, err := utils.GetDNSRecords(recordFile, EnabledRecordType)
+				if err != nil {
+					fmt.Println(err)
+					fmt.Println("ERROR - fail to parse local DNS records")
+					os.Exit(1)
+				}
+				for _, record := range localRecords {
+					fmt.Printf("%s: %s.%s -> %s\t%d\n", record.Type, record.Name, Domain, record.Content, record.TTL)
+				}
+				fmt.Printf("INFO - got %d registered DNS Records from local records \n", len(localRecords))
+				continue
 			}
-			for _, record := range localRecords {
+
+			// gather from remote
+			fmt.Printf("INFO - gathering DNS Records for %s from cloudflare api...\n", Domain)
+			allRecords := cloudflare.ReadAllRecords(domain.ZoneID, domain.CFToken, types)
+			for _, record := range allRecords {
 				fmt.Printf("%s: %s.%s -> %s\t%d\n", record.Type, record.Name, Domain, record.Content, record.TTL)
 			}
-			fmt.Printf("INFO - got %d registered DNS Records on cf \n", len(localRecords))
-			return
+			fmt.Printf("INFO - got %d registered DNS Records on cloudflare for %s \n", len(allRecords), Domain)
 		}
 
-		// Set domain name if flag exists
-		if flagDomain != "" {
-			Domain = flagDomain
-		}
-		// gather from remote
-		fmt.Println("INFO - gathering DNS Records from cloudflare api...")
-		allRecords := GetRecords(types)
-		for _, record := range allRecords {
-			fmt.Printf("%s: %s.%s -> %s\t%d\n", record.Type, record.Name, Domain, record.Content, record.TTL)
-		}
-		fmt.Printf("INFO - got %d registered DNS Records on cf \n", len(allRecords))
 	},
 }
 

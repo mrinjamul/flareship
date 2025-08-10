@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mrinjamul/flareship/models"
-	"github.com/mrinjamul/flareship/utils"
+	"github.com/mrinjamul/flareship/internal/cloudflare"
+	"github.com/mrinjamul/flareship/internal/utils"
+	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
+)
+
+var (
+	flagDomain string
 )
 
 // versionCmd represents the version command
@@ -15,45 +20,53 @@ var backupCmd = &cobra.Command{
 	Use:   "backup",
 	Short: "backup DNS records to file.",
 	Run: func(cmd *cobra.Command, args []string) {
-		var records []models.Records
-		var cfrecords []models.Record
-		// Set domain name if flag exists
-		if flagDomain != "" {
-			Domain = flagDomain
-		}
-		fmt.Println("INFO - backup started...")
-		cfrecords = GetRecords(EnabledRecordType)
-		for _, record := range cfrecords {
-			var r models.Records
-			r.Record = record
-			records = append(records, r)
-		}
-		fmt.Println("INFO - backuping to file...")
-		err := backupRecords(records)
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("ERROR - cannot able to backup records")
-			fmt.Printf("FAIL\t%v\n", err)
-			os.Exit(1)
+		for _, domain := range AppConfig.Domains {
+			if flagDomain != "" {
+				if flagDomain != domain.Name {
+					continue
+				}
+			}
+			var records []schema.Records
+			var cfrecords []schema.Record
+
+			if len(EnabledRecordType) == 0 {
+				EnabledRecordType = domain.RecordTypes
+			} else {
+				EnabledRecordType = []string{"A", "AAAA", "CNAME", "TXT", "MX", "SRV"}
+			}
+
+			fmt.Println("INFO - backup started...")
+			cfrecords = cloudflare.ReadAllRecords(domain.ZoneID, domain.CFToken, EnabledRecordType)
+			for _, record := range cfrecords {
+				var r schema.Records
+				r.Record = record
+				records = append(records, r)
+			}
+			fmt.Println("INFO - backuping to file...")
+			err := backupRecords(records, domain.Name)
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println("ERROR - cannot able to backup records")
+				fmt.Printf("FAIL\t%v\n", err)
+				os.Exit(1)
+			}
 		}
 		fmt.Println("INFO - backup completed...")
 	},
 }
 
 func init() {
-	backupCmd.Flags().StringVarP(&flagRecords, "file", "f", "", "specify the backup file")
 	backupCmd.Flags().StringVar(&flagDomain, "domain", "", "specify the domain name")
+	backupCmd.Flags().StringVarP(&flagTypes, "type", "t", "", "specify the types of records")
 }
 
-func backupRecords(records []models.Records) error {
+func backupRecords(records []schema.Records, domainName string) error {
 	var configFile string
-	if flagRecords != "" {
-		configFile = flagRecords
-	} else {
-		date := utils.NewDate()
-		num := utils.RandomNumber()
-		configFile = "dns_records_" + date + "_" + num + ".json"
-	}
+
+	date := utils.NewDate()
+	num := utils.RandomNumber()
+	configFile = "dns_records_" + domainName + "_" + date + "_" + num + ".json"
+	fmt.Println(configFile)
 	data, err := json.Marshal(records)
 	if err != nil {
 		return err

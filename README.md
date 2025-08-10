@@ -9,7 +9,7 @@
 
 ### From source
 
-If you want to build `flareship` from source, you need Go 1.16 or
+If you want to build `flareship` from source, you need Go 1.20 or
 higher. You can then use `go build` to build everything:
 
 ```
@@ -39,17 +39,22 @@ and we need to have a top level domain.
 set up `.env` file with content,
 
 ```
-CF_ZID="your-zone-id"
-CF_TOK="your-api-key"
+FLARESHIP_DOMAINS="example.com,myapp.io"
+FLARESHIP_CF_TOKENS="token1,token2"
+FLARESHIP_ZONE_IDS="zone1,zone2"
+FLARESHIP_RECORD_FILES="example_com.json,myapp_io.json"
+FLARESHIP_RESTRICTED_FILES="restricted_example_com.json,restricted_myapp_io.json"
+FLARESHIP_ALLOWED_TYPES="A,CNAME;A,CNAME"
 ```
 
 Available envs:
 
-- `CF_ZID`: Cloudflare zone id (required)
-- `CF_TOK`: Cloudflare API key (required)
-- `DOMAIN_NAME`: Top level domain name (optional)
-- `RECORD_FILE`: Path to file with domains (optional)
-- `RESTRICTED_FILE`: Path to file with restricted domains (optional)
+- `FLARESHIP_ZONE_IDS`: Cloudflare zone id
+- `FLARESHIP_CF_TOKENS`: Cloudflare API key
+- `FLARESHIP_DOMAINS`: Top level domain names
+- `FLARESHIP_RECORD_FILES`: Path to file with domains
+- `FLARESHIP_RESTRICTED_FILES`: Path to file with restricted domains
+- `FLARESHIP_ALLOWED_TYPES`: Allowed DNS Types for these domains
 
 or
 
@@ -59,19 +64,12 @@ or
 
 Use environment variables to configure the CLI.
 
-or you can use configuaration file `$HOME/.mrinjamulcli.json`
+or you can use configuaration file `flareship.json`
 
-Sample config file:
+Create config file interactively:
 
 ```json
-{
-  "cf_token": "your-api-key",
-  "zone_id": "your-zone-id",
-  "domain_name": "your-domain.com",
-  "record_file": "records.json",
-  "restricted_file": "restricted.json"
-  "record_type": ["A", "CNAME"]
-}
+flareship init
 ```
 
 ## Usage
@@ -79,25 +77,27 @@ Sample config file:
 `flareship` is a CLI to sync domains from local to Cloudflare.
 
 ```
-    mrinjamul.in CLI
+flareship CLI
 
-    Usage:
-    mrinjamul [flags]
-    mrinjamul [command]
+Usage:
+  flareship [flags]
+  flareship [command]
 
-    Available Commands:
-    completion  Generate the autocompletion script for the specified shell
-    export      export DNS records to file.
-    fmt         format the records
-    help        Help about any command
-    sync        sync with remote DNS.
-    version     prints version.
+Available Commands:
+  backup      backup DNS records to file.
+  completion  Generate the autocompletion script for the specified shell
+  fmt         format the records
+  help        Help about any command
+  init        Initialize config and empty records
+  list        list all records from remote/local
+  sync        sync with remote DNS.
+  version     prints version.
 
-    Flags:
-    -h, --help   help for mrinjamul
+Flags:
+  -c, --config string   specify config file location
+  -h, --help            help for flareship
 
-    Use "mrinjamul [command] --help" for more information about a command.
-
+Use "flareship [command] --help" for more information about a command.
 ```
 
 `flareship fmt --check` will check if the records are ok.
@@ -106,7 +106,7 @@ Sample config file:
     format the records
 
     Usage:
-    mrinjamul fmt [flags]
+    flareship fmt [flags]
 
     Flags:
     -c, --check           checks if the records has for errors
@@ -119,47 +119,48 @@ Sample config file:
 `flareship sync` will sync the records from local to remote.
 
 ```
-    sync with remote DNS.
+sync with remote DNS.
 
-    Usage:
-    mrinjamul sync [flags]
+Usage:
+  flareship sync [flags]
 
-    Flags:
-        --domain string   specify the domain name
-        --dry-run         dry run the sync
-    -f, --file string     specify the records file
-    -h, --help            help for sync
-    -p, --proxied         set all records proxied
+Flags:
+      --domain string   specify the domain name
+      --dry-run         dry run the sync
+  -h, --help            help for sync
+```
+
+`flareship list` will list all records from remote/local.
+
+```
+list all records from remote/local
+
+Usage:
+  flareship list [flags]
+
+Flags:
+  -h, --help          help for list
+  -l, --local         specify the target to list e.g. local
+  -t, --type string   specify the types of records
 
 ```
 
-`flareship export` will export the records to a file.
+`flareship backup` will export the records to a file.
 
 ```
-    export DNS records to file.
+backup DNS records to file.
 
-    Usage:
-    mrinjamul export [flags]
+Usage:
+  flareship backup [flags]
 
-    Flags:
-        --domain string   specify the domain name
-    -f, --file string     specify the export file
-    -h, --help            help for export
+Flags:
+      --domain string   specify the domain name
+  -h, --help            help for backup
+  -t, --type string     specify the types of records
 
 ```
 
 `flareship version` will print the version.
-
-```
-    prints version.
-
-    Usage:
-    mrinjamul version [flags]
-
-    Flags:
-    -h, --help   help for version
-
-```
 
 ## License
 

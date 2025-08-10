@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/mrinjamul/flareship/utils"
+	"github.com/mrinjamul/flareship/internal/config"
+	"github.com/mrinjamul/flareship/internal/utils"
+	"github.com/mrinjamul/flareship/pkg/schema"
 	"github.com/spf13/cobra"
 )
 
 var (
-	flagConfig     string = ""
-	flagRecords    string
-	flagRestricted string
-	ZoneID         string
-	CFToken        string
+	flagConfig string = ""
+	AppConfig  *schema.AppConfig
 )
 
 func init() {
@@ -21,8 +21,8 @@ func init() {
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "mrinjamul",
-		Short: "mrinjamul.in CLI",
+		Use:   "flareship",
+		Short: "flareship CLI",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Root command
 			var tip string = "tip: "
@@ -33,48 +33,30 @@ func main() {
 
 	// Add subcommands
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(fmtCmd)
 	rootCmd.AddCommand(syncCmd)
-	rootCmd.AddCommand(backupCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(backupCmd)
 	// add flags
-	// rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "", "config file")
+	rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "", "specify config file location")
 
 	// PreRun
-	_, present := os.LookupEnv("CONFIG_FILE")
+	_, present := os.LookupEnv("FLARESHIP_CONFIG")
 	if present {
-		flagConfig = os.Getenv("CONFIG_FILE")
-	}
-	// get config variables
-	flagDomain, flagRecords, flagRestricted, CFToken, ZoneID, EnabledRecordType = utils.GetConfig(flagConfig)
-
-	// get records file
-	_, present = os.LookupEnv("RECORD_FILE")
-	if present {
-		flagRecords = os.Getenv("RECORD_FILE")
-	}
-	// get restricted file
-	_, present = os.LookupEnv("RESTRICTED_FILE")
-	if present {
-		flagRestricted = os.Getenv("RESTRICTED_FILE")
-	}
-	// Get domain Name
-	_, present = os.LookupEnv("DOMAIN_NAME")
-	if present {
-		flagDomain = os.Getenv("DOMAIN_NAME")
-	}
-	// get CF TOKEN
-	_, present = os.LookupEnv("CF_TOK")
-	if present {
-		CFToken = os.Getenv("CF_TOK")
-	}
-	// get CF ZONE ID
-	_, present = os.LookupEnv("CF_ZID")
-	if present {
-		ZoneID = os.Getenv("CF_ZID")
+		flagConfig = os.Getenv("FLARESHIP_CONFIG")
 	}
 
-	err := rootCmd.Execute()
+	var err error
+	AppConfig, err = config.LoadConfig(flagConfig)
+
+	if err != nil {
+		log.Fatalf("Failed to load config from %s: %v\n", flagConfig, err)
+	}
+
+	// fmt.Println(AppConfig)
+
+	err = rootCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
