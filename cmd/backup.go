@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mrinjamul/flareship/internal/cloudflare"
 	"github.com/mrinjamul/flareship/internal/utils"
@@ -35,10 +36,25 @@ var backupCmd = &cobra.Command{
 				EnabledRecordType = []string{"A", "AAAA", "CNAME", "TXT", "MX", "SRV"}
 			}
 
+			if flagTypes != "" {
+				if flagTypes == "all" {
+					EnabledRecordType = []string{"A", "AAAA", "CNAME", "TXT", "MX", "SRV"}
+				} else {
+
+					types := strings.Split(flagTypes, ",")
+					for i := range types {
+						types[i] = strings.ToUpper(strings.TrimSpace(types[i]))
+					}
+					EnabledRecordType = types
+				}
+			}
+
 			fmt.Println("INFO - backup started...")
 			cfrecords = cloudflare.ReadAllRecords(domain.ZoneID, domain.CFToken, EnabledRecordType)
 			for _, record := range cfrecords {
 				var r schema.Records
+				suffix := "." + domain.Name
+				record.Name = strings.TrimSuffix(record.Name, suffix)
 				r.Record = record
 				records = append(records, r)
 			}

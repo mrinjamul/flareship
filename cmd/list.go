@@ -35,7 +35,7 @@ var listCmd = &cobra.Command{
 			}
 
 			recordFile := domain.RecordFile
-			Domain := domain.Name
+			domainName := domain.Name
 			if len(EnabledRecordType) == 0 {
 				EnabledRecordType = domain.RecordTypes
 			}
@@ -49,19 +49,19 @@ var listCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				for _, record := range localRecords {
-					fmt.Printf("%s: %s.%s -> %s\t%d\n", record.Type, record.Name, Domain, record.Content, record.TTL)
+					fmt.Printf("%s: %s.%s -> %s\t%d\n", record.Type, record.Name, domainName, record.Content, record.TTL)
 				}
 				fmt.Printf("INFO - got %d registered DNS Records from local records \n", len(localRecords))
 				continue
 			}
 
 			// gather from remote
-			fmt.Printf("INFO - gathering DNS Records for %s from cloudflare api...\n", Domain)
+			fmt.Printf("INFO - gathering DNS Records for %s from cloudflare api...\n", domainName)
 			allRecords := cloudflare.ReadAllRecords(domain.ZoneID, domain.CFToken, types)
 			for _, record := range allRecords {
-				fmt.Printf("%s: %s.%s -> %s\t%d\n", record.Type, record.Name, Domain, record.Content, record.TTL)
+				fmt.Printf("%s: %s -> %s\t%d\n", record.Type, record.Name, record.Content, record.TTL)
 			}
-			fmt.Printf("INFO - got %d registered DNS Records on cloudflare for %s \n", len(allRecords), Domain)
+			fmt.Printf("INFO - got %d registered DNS Records on cloudflare for %s \n", len(allRecords), domainName)
 		}
 
 	},

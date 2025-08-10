@@ -37,7 +37,7 @@ var syncCmd = &cobra.Command{
 				}
 			}
 			// Set domain name if flag exist
-			Domain := domain.Name
+			domainName := domain.Name
 			recordsFile := domain.RecordFile
 			restrictedFile := domain.RestrictedFile
 			zoneID := domain.ZoneID
@@ -50,7 +50,7 @@ var syncCmd = &cobra.Command{
 				EnabledRecordType = domain.RecordTypes
 			}
 
-			fmt.Printf("sync for %s ...\n", Domain)
+			fmt.Printf("sync for %s ...\n", domainName)
 
 			// gather from remote
 			fmt.Println("INFO - gathering DNS Records from cloudflare api...")
@@ -67,9 +67,9 @@ var syncCmd = &cobra.Command{
 			for id := range localRecords {
 				localRecords[id].TTL = 1
 				if localRecords[id].Name == "@" {
-					localRecords[id].Name = Domain
+					localRecords[id].Name = domainName
 				} else {
-					localRecords[id].Name = localRecords[id].Name + "." + Domain
+					localRecords[id].Name = localRecords[id].Name + "." + domainName
 				}
 			}
 			fmt.Printf("INFO - got %d local CNAME Records in repo \n", len(localRecords))
@@ -161,7 +161,7 @@ var syncCmd = &cobra.Command{
 			}
 			fmt.Printf("STATUS - %d record(s) created, %d record(s) updated, %d record(s) deleted\n", len(createdRecords), len(updatedRecords), len(deletedRecords))
 			fmt.Println("")
-			fmt.Printf("sync completed for %s 🎉\n", Domain)
+			fmt.Printf("sync completed for %s 🎉\n", domainName)
 		}
 
 	},
