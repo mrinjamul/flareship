@@ -24,16 +24,24 @@ jobs:
 
       - name: Sync DNS --dry-run
         env:
-          CF_ZID: ${{ secrets.CF_ZID }}
-          CF_TOK: ${{ secrets.CF_TOK }}
+          FLARESHIP_DOMAINS: ${{ secrets.FLARESHIP_DOMAINS }}
+          FLARESHIP_CF_TOKENS: ${{ secrets.FLARESHIP_CF_TOKENS }}
+          FLARESHIP_ZONE_IDS: ${{ secrets.FLARESHIP_ZONE_IDS }}
+          FLARESHIP_RECORD_FILES: ${{ secrets.FLARESHIP_RECORD_FILES }}
+          FLARESHIP_RESTRICTED_FILES: ${{ secrets.FLARESHIP_RESTRICTED_FILES }}
+          FLARESHIP_ALLOWED_TYPES: ${{ secrets.FLARESHIP_ALLOWED_TYPES }}
         run: |
           go version
           ./flareship sync --dry-run
 
       - name: Sync DNS
         env:
-          CF_ZID: ${{ secrets.CF_ZID }}
-          CF_TOK: ${{ secrets.CF_TOK }}
+          FLARESHIP_DOMAINS: ${{ secrets.FLARESHIP_DOMAINS }}
+          FLARESHIP_CF_TOKENS: ${{ secrets.FLARESHIP_CF_TOKENS }}
+          FLARESHIP_ZONE_IDS: ${{ secrets.FLARESHIP_ZONE_IDS }}
+          FLARESHIP_RECORD_FILES: ${{ secrets.FLARESHIP_RECORD_FILES }}
+          FLARESHIP_RESTRICTED_FILES: ${{ secrets.FLARESHIP_RESTRICTED_FILES }}
+          FLARESHIP_ALLOWED_TYPES: ${{ secrets.FLARESHIP_ALLOWED_TYPES }}
         run: |
           go version
           ./flareship sync
