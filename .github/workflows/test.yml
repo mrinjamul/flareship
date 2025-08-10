@@ -13,9 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         go_version:
-          - 1.18.x
-          - 1.17.x
-          - 1.18.x
+          - 1.20.x
+          - 1.23.x
     name: Test with ${{ matrix.go_version }}
     steps:
       - uses: actions/checkout@v2
