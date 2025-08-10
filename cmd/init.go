@@ -138,6 +138,8 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		} else {
 			fmt.Println("Config initialized successfully.")
+			fmt.Println("For setting this global config, move this config to ")
+			fmt.Println(" $HOME/.config/flareship.config")
 		}
 	},
 }

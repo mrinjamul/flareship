@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mrinjamul/flareship/internal/utils"
 	"github.com/mrinjamul/flareship/pkg/schema"
 )
 
@@ -76,6 +77,14 @@ func LoadConfig(path string) (*schema.AppConfig, error) {
 			return config, nil
 		}
 		fmt.Println(err)
+	}
+
+	homeDir := utils.HomeDir()
+	configPath := filepath.Join(homeDir, ".config", "flareship.json")
+	_, err := os.Stat(path)
+	if err == nil {
+		// fmt.Println("Using default config: " + configPath)
+		path = configPath
 	}
 
 	bytes, err := os.ReadFile(path)
