@@ -39,6 +39,7 @@ func main() {
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(backupCmd)
+	rootCmd.AddCommand(diffCmd) // Add the new diff command
 	// add flags
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "enable verbose output") // Add verbose flag
 	rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "", "specify config file location")
