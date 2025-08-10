@@ -108,22 +108,39 @@ var syncCmd = &cobra.Command{
 						newRecords := cloudflare.CreateRecord(zoneID, token, postBody)
 						r = newRecords
 					}
-					log.Info("%s %s: %s %s", r.ID, r.Type, r.Name, r.Content) // Replaced fmt.Printf
+					log.Info("+ %-10s %-30s %-40s", r.Type, r.Name, r.Content)
 				}
 			}
 			// Update records from the list
 			if len(updatedRecords) > 0 {
-				log.Info("Updating DNS Record(s):") // Replaced fmt.Println
-				for _, r := range updatedRecords {
-					log.Debug("Updating record: %+v", r) // Replaced fmt.Println(r)
-					postBody, err := json.Marshal(r)
+				log.Info("Updating DNS Record(s):")
+				for _, newRecord := range updatedRecords {
+					// Find the old record from registeredRecords
+					var oldRecord schema.Record
+					for _, regRec := range registeredRecords {
+						if regRec.Name == newRecord.Name && regRec.Type == newRecord.Type {
+							oldRecord = regRec
+							break
+						}
+					}
+
+					log.Info("~ %-10s %-30s", newRecord.Type, newRecord.Name)
+					if oldRecord.Content != newRecord.Content {
+						log.Info("- %-40s", oldRecord.Content)
+						log.Info("+ %-40s", newRecord.Content)
+					}
+					if oldRecord.Proxied != newRecord.Proxied {
+						log.Info("- Proxied: %t", oldRecord.Proxied)
+						log.Info("+ Proxied: %t", newRecord.Proxied)
+					}
+
+					postBody, err := json.Marshal(newRecord)
 					if err != nil {
-						log.Error("fail to marshal record while updating: %v", err) // Replaced fmt.Println(err) and os.Exit(1)
+						log.Error("fail to marshal record while updating: %v", err)
 					}
 					if !flagDryRun {
-						r = cloudflare.UpdateRecord(zoneID, token, r.ID, postBody)
+						cloudflare.UpdateRecord(zoneID, token, newRecord.ID, postBody)
 					}
-					log.Info("%s %s: %s %s", r.ID, r.Type, r.Name, r.Content) // Replaced fmt.Printf
 				}
 			}
 			// check for unused records
@@ -147,7 +164,7 @@ var syncCmd = &cobra.Command{
 							log.Error("failed to delete %s:%s", r.Type, r.Name) // Replaced fmt.Println and os.Exit(1)
 						}
 					}
-					log.Info("%s: %s %s", result.Result.ID, r.Name, r.Content) // Replaced fmt.Printf
+					log.Info("- %-10s %-30s %-40s", r.Type, r.Name, r.Content)
 				}
 			} else {
 				log.Info("found none") // Replaced fmt.Println
